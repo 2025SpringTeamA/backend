@@ -8,7 +8,5 @@ class Poem(Base,TimestampMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     poem = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
+    
     users = relationship("User", backref="poem")
