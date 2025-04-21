@@ -8,6 +8,4 @@ class Emotion(Base,  TimestampMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     emotion = Column(String(255), nullable=False)
-
-    generated_images = relationship("GeneratedImage", back_populates="emotion")
-    generated_bgms = relationship("GeneratedBGM", back_populates="emotion")
+    generated_media = relationship("GeneratedMedia", back_populates="emotion")

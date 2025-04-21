@@ -19,5 +19,4 @@ class Message(Base, TimestampMixin):
 
     session = relationship("Session", back_populates="messages")
     favorites = relationship("Favorite", back_populates="message")
-    generated_images = relationship("GeneratedImage", back_populates="message")
-    generated_bgms = relationship("GeneratedBGM", back_populates="message")
+    generated_media = relationship("GeneratedMedia", back_populates="message")
