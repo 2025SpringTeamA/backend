@@ -18,3 +18,16 @@ exec db:
 
 down:
 	docker compose down
+
+migrate:
+	docker compose exec fastapi-app sh -c "cd /app && alembic upgrade head"
+
+makemigration:
+	@read -p "Migration name: " name; \
+	docker compose exec fastapi-app sh -c "cd /app && alembic revision --autogenerate -m $$name"
+
+show:
+	docker compose exec fastapi-app sh -c "cd /app && alembic history"
+
+downgrade:
+	docker compose exec fastapi-app sh -c "cd /app && alembic downgrade -1"
