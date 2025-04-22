@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 import enum
 from .base import Base, TimestampMixin
 
-class MessageTypeEnum(str, enum.Enum)
+class MessageTypeEnum(str, enum.Enum):
     IMAGE = "image"
     BGM - "bgm"
 
