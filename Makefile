@@ -10,10 +10,10 @@ ps:
 logs:
 	docker compose logs
 
-exec app:
+exec-app:
 	docker exec -it fastapi-app bash
 
-exec db:
+exec-db:
 	docker exec -it mysql-db bash
 
 down:

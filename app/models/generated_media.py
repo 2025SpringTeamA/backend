@@ -3,16 +3,16 @@ from sqlalchemy.orm import relationship
 import enum
 from .base import Base, TimestampMixin
 
-class MessageTypeEnum(str, enum.Enum):
+class MediaTypeEnum(str, enum.Enum):
     IMAGE = "image"
-    BGM - "bgm"
+    BGM = "bgm"
 
 class GeneratedMedia(Base, TimestampMixin):
     __tablename__ = "generated_media"
 
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey("messages.id"))
-    emotion_id = Column(Integer, ForeignKey("emotion.id"))
+    emotion_id = Column(Integer, ForeignKey("emotions.id"))
     media_type = Column(Enum(MediaTypeEnum), nullable=False)
     media_url = Column(String(255), nullable=False)
 
