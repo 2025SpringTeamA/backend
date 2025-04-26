@@ -23,5 +23,5 @@ class GeneratedMediaResponse(GeneratedMediaBase):
     created_at: datetime
     updated_at: datetime
 
-    clsss Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True

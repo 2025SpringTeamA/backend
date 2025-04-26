@@ -13,7 +13,6 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     user_name = Column(String(255), nullable=False)
-    poem_id = Column(Integer, ForeignKey("poems.id"))
     is_admin = Column(Boolean, default=False)
 
     sessions = relationship("Session", back_populates="user")
