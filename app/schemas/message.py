@@ -1,0 +1,25 @@
+from enum import Enum
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
+class ResponseType(str, Enum):
+    PRAISE = "praise"
+    INSULT = "insult"
+
+class MessageBase(BaseModel):
+    session_id: int
+    is_users: bool
+    response_type: Optional[ResponseType] = None
+    content: str
+
+class MessageCreate(MessageBase):
+    pass
+
+class MessageResponse(MessageBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
