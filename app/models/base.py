@@ -1,7 +1,7 @@
 # models/base.py
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import Column, DateTime
-from utils.time import now_jst
+from utils.timestamp import now_jst
 
 class Base(DeclarativeBase):
     pass

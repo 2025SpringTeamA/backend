@@ -28,7 +28,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 sys.path.append(str(Path(__file__).parent.parent))
-from app.models import Base
+from models import Base
 # modelsをインポートする
 
 target_metadata = Base.metadata

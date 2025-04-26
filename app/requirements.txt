@@ -1,4 +1,6 @@
 fastapi
 uvicorn[standard]
 mysql-connector-python
+pymysql
+cryptography
 alembic
