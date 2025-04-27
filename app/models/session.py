@@ -18,3 +18,4 @@ class Session(Base):
 
     user = relationship("User", back_populates="sessions")
     messages = relationship("Message", back_populates="session")
+    favorites = relationship("Favorite", back_populates="session")

@@ -18,5 +18,4 @@ class Message(Base, TimestampMixin):
     content = Column(Text, nullable=False)
 
     session = relationship("Session", back_populates="messages")
-    favorites = relationship("Favorite", back_populates="message")
     generated_media = relationship("GeneratedMedia", back_populates="message")
