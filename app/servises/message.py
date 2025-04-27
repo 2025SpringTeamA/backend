@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from typing import List
 from app.models.message import Message
-from app.schemas.message import MessageCreate
+from app.schemas.message import MessageCreate, MessageResponse
 
 
 def create_message(db: Session, message: MessageCreate) -> Message:
@@ -12,12 +13,13 @@ def create_message(db: Session, message: MessageCreate) -> Message:
     return db_message
 
 
-def get_message(db: Session, session_id: int) -> list[Message]:
-    return db.query(Message).filter(Message.session_id == session_id).order_by(Message.created_at).all()
+def get_message(db: Session, session_id: int) -> List[MessageResponse]:
+    messages = db.query(Message).filter(Message.session_id == session_id).order_by(Message.created_at).all()
+    return [MessageResponse.from_orm(message) for message in messages]
 
 
 def update_message(db: Session, message_id: int, content: str) -> Message:
-    db_message = db.query(Message).filter(Message.id == message_id).first()
+    db_message = db.query(Message).filter(Message.id == message_id, Message.is_users == True).first()
     if db_message is None:
         raise HTTPException(status_code=404, detail="該当するメッセージが見つかりません") #　もしくはreturn None
     db_message.content = content
@@ -28,6 +30,7 @@ def update_message(db: Session, message_id: int, content: str) -> Message:
 
 def delete_message(db: Session, message_id: int) -> None:
     db_message = db.query(Message).filter(Message.id == message_id).first()
-    if db_message:
-        db.delete(db_message)
-        db.commit()
+    if db_message is None:
+        raise HTTPException(status_code=404, detail="該当するメッセージが見つかりません")
+    db.delete(db_message)
+    db.commit()

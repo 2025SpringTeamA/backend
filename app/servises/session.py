@@ -7,8 +7,6 @@ from app.schemas.session import SessionSummaryResponse
 def get_sessions_with_first_message(
     db: Session, 
     user_id: int,
-    skip: int = 0,
-    limit: int = 100,
     favorite_only: bool = False,
     keyword: str | None = None,
     ):
@@ -19,8 +17,6 @@ def get_sessions_with_first_message(
     Args:
         db (Session): データベースセッション
         user_id (int): ユーザーID
-        skip (int, optional): 取得開始位置（デフォルト0）
-        limit (int, optional): 取得件数（デフォルト100）
         favorite_only (bool, optional): お気に入りメッセージが存在するセッションのみ取得する場合True（デフォルトFalse）
         keyword (str | None, optional): メッセージ本文に含まれるキーワードでフィルタリングする場合に指定（デフォルトNone）
 
@@ -29,13 +25,16 @@ def get_sessions_with_first_message(
     """
     query = db.query(SessionModel).filter(SessionModel.user_id == user_id)
     
+    if favorite_only or keyword:
+        query = query.join(SessionModel.messages)
+    
     if favorite_only:
-        query = query.join(SessionModel.messages).join(Message.favorites).distinct()
+        query = query.join(Message.favorites)
         
     if keyword:
-        query = query.join(SessionModel.messages).filter(Message.content.ilike(f"%{keyword}%")).distinct()
+        query = query.filter(Message.content.ilike(f"%{keyword}%"))
     
-    sessions = query.offset(skip).limit(limit).all()
+    sessions = query.distinct().all()
     result = []
     for session in sessions:
         first_message = (
@@ -51,3 +50,27 @@ def get_sessions_with_first_message(
             created_at=session.created_at,
         ))
     return result
+
+
+def delete_session(db: Session, session_id: int, user_id: int):
+    """指定したセッションとそのメッセージを削除します。
+
+    Args:
+        db (Session): データベースセッション
+        session_id (int): 削除対象のセッションID
+        user_id (int): ユーザーID（本人確認用）
+    """
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == user_id
+    ).first()
+    
+    if  not session:
+        return False
+    
+    db.query(Message).filter(Message.session_id == session_id).delete()
+    
+    db.delete(session)
+    db.commit()
+    
+    return True

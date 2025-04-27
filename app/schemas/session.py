@@ -10,8 +10,6 @@ class CharacterMode(str, Enum):
     ANGER_MOM = "anger_mom"
 
 class SessionQueryParams(BaseModel):
-    skip: int = 0
-    limit: int = 20
     favorite_only: bool = False
     keyword: Optional[str] = None
 
