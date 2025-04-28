@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 import os
 
+
 app = FastAPI()
+
 
 # ✅ CORS設定（Next.jsからアクセス可能にする）
 app.add_middleware(
@@ -34,3 +36,10 @@ def db_status():
             return {"db_status": "not connected"}
     except Exception as e:
         return {"db_status": "error", "details": str(e)}
+
+
+
+
+# テスト
+from api.endpoints import message
+app.include_router(message.router)

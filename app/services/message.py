@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.models.message import Message
-from app.schemas.message import MessageCreate, MessageResponse
+from models.message import Message
+from schemas.message import MessageCreate, MessageResponse
 
 
 def create_message(db: Session, message: MessageCreate) -> Message:

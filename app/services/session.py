@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from app.models.session import Session as SessionModel
-from app.models.message import Message
-from app.schemas.session import SessionSummaryResponse
+from models.session import Session as SessionModel
+from models.message import Message
+from schemas.session import SessionSummaryResponse
 
 
 def get_sessions_with_first_message(
