@@ -1,25 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from services.message import create_message, get_message, update_message, delete_message
-from schemas.message import MessageCreate, MessageResponse
-from db.session import get_db
-from typing import List
+from app.models import Message, Session as ChatSession
+from app.schemas.message import MessageCreate, MessageUpdate, MessageResponse
+from app.core.database import get_db
 
-router = APIRouter()
+@router.post("/sessions/{session_id}/messages")
+async def create_message(session_id: int, message_data: MessageCreate, db: Session = Depends(get_db)):
+    session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
+    message = Message(content=message_data.content, session_id=session_id)
+    db.add(message)
+    db.commit()
+    return message
 
-@router.post("/messages/", response_model=MessageResponse)
-def create_message_endpoint(message: MessageCreate, db: Session = Depends(get_db)):
-    return create_message(db=db, message=message)
-
-@router.get("/messages/{session_id}", response_model=List[MessageResponse])
-def get_message_endpoint(session_id: int, db: Session = Depends(get_db)):
-    return get_message(db=db, session_id=session_id)
-
-@router.put("/messages/{message_id}", response_model=MessageResponse)
-def update_message_endpoint(message_id: int, content: str, db: Session = Depends(get_db)):
-    return update_message(db=db, message_id=message_id, content=content)
-
-@router.delete("/messages/{message_id}", status_code=204)
-def delete_message_endpoint(message_id: int, db: Session = Depends(get_db)):
-    delete_message(db=db, message_id=message_id)
-    return {"detail": "Message deleted"}
+@router.put("/sessions/{session_id}/messages/{message_id}")
+async def update_message(session_id: int, message_id: int, message_data: MessageUpdate, db: Session = Depends(get_db)):
+    message = db.query(Message).filter(Message.id == message_id).first()
+    if not message:
+        raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
+    message.content = message_data.content
+    db.commit()
+    return message

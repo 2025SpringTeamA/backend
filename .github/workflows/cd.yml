@@ -1,0 +1,102 @@
+name: Deploy FastAPI to ECR and ECS
+
+on:
+  workflow_run:
+    workflows: ["Build and Test FastAPI Backend"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Commit SHA to deploy'
+        required: false
+        type: string
+
+jobs:
+  deploy-to-ecr-ecs:
+    name: Deploy to ECR and ECS
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'workflow_dispatch') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download commit info
+        if: github.event.inputs.commit_sha == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-commit-info
+          path: /tmp/artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Set commit SHA
+        id: set-sha
+        run: |
+          if [ -n "${{ github.event.inputs.commit_sha }}" ]; then
+            echo "commit_sha=${{ github.event.inputs.commit_sha }}" >> "$GITHUB_OUTPUT"
+          elif [ -f "/tmp/artifacts/commit-sha" ]; then
+            SHA=$(cat /tmp/artifacts/commit-sha)
+            echo "commit_sha=$SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "commit_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/api
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/saburo-api:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Migration image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/migration
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/saburo-migration:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-migration:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update ECS API task definition
+        id: task-def-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend/task-definitions/api.json
+          container-name: api
+          image: ${{ steps.login-ecr.outputs.registry }}/saburo-api:${{ steps.set-sha.outputs.commit_sha }}
+
+      - name: Deploy ECS API task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-api.outputs.task-definition }}
+          service: saburo-api-service
+          cluster: saburo-cluster
+          wait-for-service-stability: true
+
+      - name: Run DB Migration
+        run: |
+          aws ecs run-task \
+            --cluster saburo-cluster \
+            --task-definition saburo-migration \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNETS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUPS }}],assignPublicIp=ENABLED}"
