@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 957084faf6ba
+Revision ID: c1621488556f
 Revises: 
-Create Date: 2025-04-27 12:20:34.661477
+Create Date: 2025-05-03 07:44:52.951958
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '957084faf6ba'
+revision: str = 'c1621488556f'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,6 +34,8 @@ def upgrade() -> None:
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('user_name', sa.String(length=255), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('user_id')
     )
@@ -43,7 +45,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('character_mode', sa.Enum('saburo', 'bijyo', 'anger_mom', name='charactermodeenum'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_sessions_id'), 'sessions', ['id'], unique=False)
@@ -53,8 +57,8 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
+    sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_favorites_id'), 'favorites', ['id'], unique=False)
@@ -66,7 +70,7 @@ def upgrade() -> None:
     sa.Column('content', sa.Text(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ),
+    sa.ForeignKeyConstraint(['session_id'], ['sessions.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_messages_id'), 'messages', ['id'], unique=False)
@@ -82,7 +86,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['emotion_id'], ['emotions.id'], ),
-    sa.ForeignKeyConstraint(['message_id'], ['messages.id'], ),
+    sa.ForeignKeyConstraint(['message_id'], ['messages.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_generated_media_id'), 'generated_media', ['id'], unique=False)

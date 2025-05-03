@@ -14,10 +14,6 @@ services:
     ports:
       - "8000:8000"
 
-    # ホスト側の ./app ディレクトリをコンテナの /app にマウント（ソースコードの同期）
-    volumes:
-      - ./app:/app
-
     # 環境変数を定義した .env ファイルを読み込む
     env_file:
       - .env
@@ -28,6 +24,13 @@ services:
 
     # コンテナ起動時の実行コマンド（開発用：ホットリロードを有効にして uvicorn を起動）
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+    environment:
+      - PYTHONPATH=/app
+
+    # ホスト側の ./app ディレクトリをコンテナの /app にマウント（ソースコードの同期）
+    volumes:
+      - ./app:/app
 
   # MySQL データベースのサービス定義
   db:

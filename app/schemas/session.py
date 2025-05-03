@@ -20,6 +20,13 @@ class SessionBase(BaseModel):
 class SessionCreate(SessionBase):
     pass
 
+class SessionUpdate(BaseModel):
+    character_mode: Optional[CharacterMode] = None
+    token: str
+    
+    class Config:
+        from_attributes = True
+
 class SessionResponse(SessionBase):
     id: int
     created_at: datetime
@@ -33,6 +40,20 @@ class SessionSummaryResponse(BaseModel):
     character_mode: CharacterMode
     first_message: Optional[str] = ""
     created_at: datetime
+    is_favorite: bool = False
 
     class Config:
         from_attributes = True
+        
+
+class MessageSummary(BaseModel):
+    message_id :int
+    message_text: str
+    sender_type : str # "user" or "ai"
+    
+
+class SessionWIthMessagesResponse(SessionResponse):
+    chat_id: int
+    messages: list[MessageSummary] = []
+    created_at: datetime
+    updated_at: datetime

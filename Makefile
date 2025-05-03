@@ -11,23 +11,23 @@ logs:
 	docker compose logs
 
 exec-app:
-	docker exec -it fastapi-app bash
+	docker compose exec -it web bash
 
 exec-db:
-	docker exec -it mysql-db bash
+	docker compose exec -it db bash
 
 down:
 	docker compose down
 
 migrate:
-	docker compose exec fastapi-app sh -c "cd /app && alembic upgrade head"
+	docker compose exec -it web bash -c "cd /app && alembic upgrade head"
 
 makemigration:
 	@read -p "Migration name: " name; \
-	docker compose exec fastapi-app sh -c "cd /app && alembic revision --autogenerate -m $$name"
+	docker compose exec -it web bash -c "cd /app && alembic revision --autogenerate -m $$name"
 
 show:
-	docker compose exec fastapi-app sh -c "cd /app && alembic history"
+	docker compose exec -it web bash -c "cd /app && alembic history"
 
 downgrade:
-	docker compose exec fastapi-app sh -c "cd /app && alembic downgrade -1"
+	docker compose exec -it web bash -c "cd /app && alembic downgrade -1"

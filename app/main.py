@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 import os
+from api.endpoints.auth import router as auth_router
 
 
 app = FastAPI()
@@ -37,7 +38,8 @@ def db_status():
     except Exception as e:
         return {"db_status": "error", "details": str(e)}
 
-
+# 認証用エンドポイント
+app.include_router(auth_router, prefix="/api", tags=["auth"])
 
 
 # テスト

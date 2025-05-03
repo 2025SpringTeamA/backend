@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models.session import Session as SessionModel
 from models.message import Message
+from models.favorite import Favorite
 from schemas.session import SessionSummaryResponse
 
 
@@ -29,7 +30,7 @@ def get_sessions_with_first_message(
         query = query.join(SessionModel.messages)
     
     if favorite_only:
-        query = query.join(Message.favorites)
+        query = query.join(SessionModel.favorites)
         
     if keyword:
         query = query.filter(Message.content.ilike(f"%{keyword}%"))
@@ -43,11 +44,18 @@ def get_sessions_with_first_message(
             .order_by(Message.created_at.asc())
             .first()
         )
+        
+        is_fav = db.query(Favorite).filter(
+            session_id = session.id,
+            user_id = user_id
+        ).first() is not None
+        
         result.append(SessionSummaryResponse(
             session_id=session.id,
             character_mode=session.character_mode,
             first_message=first_message.content[:20] if first_message else "",
             created_at=session.created_at,
+            is_favorite=is_fav
         ))
     return result
 

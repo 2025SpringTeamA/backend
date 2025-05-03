@@ -1,19 +1,17 @@
-import os
-from dotenv import load_dotenv
+from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends
-from app.models.user import User
-from app.core.database import get_db
+from models.user import User
+from core.database import get_db
 from fastapi.security import OAuth2PasswordBearer
-from app.core.config import settings
+from core.config import settings
 
-load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
@@ -49,7 +47,9 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.query(User).filter(User.user_id == int(user_id)).first()
     if user is None:
         raise credentials_exception
+    elif not user.is_active:
+        raise HTTPException(status_code=403, detail="このアカウントは無効です")
     return user

@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.models import Message, Session as ChatSession
-from app.schemas.message import MessageCreate, MessageUpdate, MessageResponse
-from app.core.database import get_db
+from models import Message, Session as ChatSession
+from schemas.message import MessageCreate
+from core.database import get_db
+
+router = APIRouter()
 
 @router.post("/sessions/{session_id}/messages")
 async def create_message(session_id: int, message_data: MessageCreate, db: Session = Depends(get_db)):
@@ -14,11 +16,11 @@ async def create_message(session_id: int, message_data: MessageCreate, db: Sessi
     db.commit()
     return message
 
-@router.put("/sessions/{session_id}/messages/{message_id}")
-async def update_message(session_id: int, message_id: int, message_data: MessageUpdate, db: Session = Depends(get_db)):
-    message = db.query(Message).filter(Message.id == message_id).first()
-    if not message:
-        raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
-    message.content = message_data.content
-    db.commit()
-    return message
+# @router.put("/sessions/{session_id}/messages/{message_id}")
+# async def update_message(session_id: int, message_id: int, message_data: MessageUpdate, db: Session = Depends(get_db)):
+#     message = db.query(Message).filter(Message.id == message_id).first()
+#     if not message:
+#         raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
+#     message.content = message_data.content
+#     db.commit()
+#     return message
