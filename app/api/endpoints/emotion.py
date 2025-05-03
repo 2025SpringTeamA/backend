@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.models import Emotion
-from app.schemas.emotion import EmotionCreate, EmotionResponse
-from app.core.database import get_db
+from models import Emotion
+from schemas.emotion import EmotionCreate, EmotionResponse
+from core.database import get_db
 
 router = APIRouter()
 

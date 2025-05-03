@@ -7,6 +7,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     user_name: str
+    is_admin: Optional[bool] = False
 
 
 # ログイン・リクエスト 
