@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class FavoriteBase(BaseModel):
-    message_id: int
+    session_id: int
     user_id: int
 
 class FavoriteCreate(FavoriteBase):

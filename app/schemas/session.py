@@ -52,8 +52,9 @@ class MessageSummary(BaseModel):
     sender_type : str # "user" or "ai"
     
 
-class SessionWIthMessagesResponse(SessionResponse):
+class SessionWithMessagesResponse(SessionResponse):
     chat_id: int
     messages: list[MessageSummary] = []
     created_at: datetime
     updated_at: datetime
+    

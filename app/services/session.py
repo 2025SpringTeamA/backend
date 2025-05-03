@@ -3,6 +3,7 @@ from models.session import Session as SessionModel
 from models.message import Message
 from models.favorite import Favorite
 from schemas.session import SessionSummaryResponse
+from fastapi import HTTPException
 
 
 def get_sessions_with_first_message(
@@ -10,20 +11,7 @@ def get_sessions_with_first_message(
     user_id: int,
     favorite_only: bool = False,
     keyword: str | None = None,
-    ):
-    """
-    指定したユーザーIDに紐づくセッション一覧を取得します。
-    セッションごとに、最初のメッセージの内容と作成日時をまとめて返します。
-
-    Args:
-        db (Session): データベースセッション
-        user_id (int): ユーザーID
-        favorite_only (bool, optional): お気に入りメッセージが存在するセッションのみ取得する場合True（デフォルトFalse）
-        keyword (str | None, optional): メッセージ本文に含まれるキーワードでフィルタリングする場合に指定（デフォルトNone）
-
-    Returns:
-        セッション情報（session_id、character_mode、first_message、created_at）をまとめたリスト
-    """
+    )->list[SessionSummaryResponse]:
     query = db.query(SessionModel).filter(SessionModel.user_id == user_id)
     
     if favorite_only or keyword:
@@ -36,6 +24,7 @@ def get_sessions_with_first_message(
         query = query.filter(Message.content.ilike(f"%{keyword}%"))
     
     sessions = query.distinct().all()
+
     result = []
     for session in sessions:
         first_message = (
@@ -46,8 +35,8 @@ def get_sessions_with_first_message(
         )
         
         is_fav = db.query(Favorite).filter(
-            session_id = session.id,
-            user_id = user_id
+            Favorite.session_id == session.id,
+            Favorite.user_id == user_id
         ).first() is not None
         
         result.append(SessionSummaryResponse(
@@ -60,25 +49,50 @@ def get_sessions_with_first_message(
     return result
 
 
-def delete_session(db: Session, session_id: int, user_id: int):
-    """指定したセッションとそのメッセージを削除します。
-
-    Args:
-        db (Session): データベースセッション
-        session_id (int): 削除対象のセッションID
-        user_id (int): ユーザーID（本人確認用）
-    """
+def delete_session(
+    db: Session,
+    session_id: int,
+    user_id: int
+)-> bool:
     session = db.query(SessionModel).filter(
         SessionModel.id == session_id,
         SessionModel.user_id == user_id
     ).first()
     
-    if  not session:
+    if not session:
         return False
     
-    db.query(Message).filter(Message.session_id == session_id).delete()
-    
-    db.delete(session)
+    db.delete(session) # cascade設定によりメッセージも削除される
     db.commit()
-    
     return True
+
+
+def toggle_favorite_session(
+    db: Session,
+    session_id: int,
+    user_id: int
+)->dict:
+    # セッションの存在を確認
+    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail= "チャットが見つかりません")
+        
+    # お気に入りの状態チェック
+    favorite = db.query(Favorite).filter_by(
+            session_id = session_id,
+            user_id = user_id
+        ).first()
+    
+    if favorite:
+        db.delete(favorite)
+        db.commit()
+        return{"message": "お気に入りを解除しました", "is_favorite": False}
+    else:
+        new_fav = Favorite(
+            session_id = session_id,
+            user_id = user_id
+        )
+        db.add(new_fav)
+        db.commit()
+        return {"message": "お気に入りを追加しました", "is_favorite": True}
+    

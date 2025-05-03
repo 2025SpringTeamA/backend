@@ -13,7 +13,7 @@ class Session(Base, TimestampMixin):
     __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     character_mode = Column(Enum(CharacterModeEnum), nullable=False)
 
     user = relationship("User", back_populates="sessions")

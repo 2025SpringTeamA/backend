@@ -26,7 +26,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    token = create_access_token({"sub": str(new_user.user_id)})
+    token = create_access_token({"sub": str(new_user.id)})
     return {"token": token}
 
 
@@ -43,7 +43,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         if user_data.pin_code != settings.admin_pin_code:
             raise HTTPException(status_code=400, detail="PINコードが違います。")
         
-    token = create_access_token({"sub": str(user.user_id)})
+    token = create_access_token({"sub": str(user.id)})
     return {"token": token}
         
 

@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 import os
 from api.endpoints.auth import router as auth_router
+from api.endpoints.user import router as user_router
+from api.endpoints.session import router as session_router
+from api.endpoints.message import router as message_router
+from api.endpoints.generated_media import router as generated_media_router
 
 
 app = FastAPI()
@@ -38,10 +42,18 @@ def db_status():
     except Exception as e:
         return {"db_status": "error", "details": str(e)}
 
+
 # 認証用エンドポイント
 app.include_router(auth_router, prefix="/api", tags=["auth"])
 
+# アカウント情報用エンドポイント
+app.include_router(user_router, prefix="/api", tags=["user"])
 
-# テスト
-from api.endpoints import message
-app.include_router(message.router)
+# チャット用エンドポイント
+app.include_router(session_router, prefix="/api", tags=["session"])
+
+# メッセージ用エンドポイント
+app.include_router(message_router, prefix="/api", tags=["message"])
+
+# 生成用エンドポイント
+app.include_router(generated_media_router, prefix="/api", tags=["generated_media"])
