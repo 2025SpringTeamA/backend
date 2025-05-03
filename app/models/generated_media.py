@@ -11,7 +11,7 @@ class GeneratedMedia(Base, TimestampMixin):
     __tablename__ = "generated_media"
 
     id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey("messages.id"))
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"))
     emotion_id = Column(Integer, ForeignKey("emotions.id"))
     media_type = Column(Enum(MediaTypeEnum), nullable=False)
     media_url = Column(String(255), nullable=False)

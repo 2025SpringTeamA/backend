@@ -16,6 +16,9 @@ class MessageBase(BaseModel):
 class MessageCreate(MessageBase):
     pass
 
+class MessageUpdate(BaseModel):
+    content: str
+
 class MessageResponse(MessageBase):
     id: int
     created_at: datetime

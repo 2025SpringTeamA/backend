@@ -1,24 +1,88 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.models import Message, Session as ChatSession
-from app.schemas.message import MessageCreate, MessageUpdate, MessageResponse
-from app.core.database import get_db
+from models import Message, Session as ChatSession
+from models import User
+from schemas.message import MessageCreate, MessageResponse, MessageUpdate
+from core.database import get_db
+from utils.auth import get_current_user
+from services.message import create_message, get_messages_by_session, update_user_message ,delete_message
 
-@router.post("/sessions/{session_id}/messages")
-async def create_message(session_id: int, message_data: MessageCreate, db: Session = Depends(get_db)):
-    session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+
+router = APIRouter()
+
+
+# 日記の投稿またはキャラクターの返答を作成
+@router.post("/api/sessions/{session_id}/messages", response_model=MessageResponse)
+async def create_message(
+    session_id: int,
+    message_data: MessageCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == current_user.id
+    ).first()
+
     if not session:
-        raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
-    message = Message(content=message_data.content, session_id=session_id)
-    db.add(message)
-    db.commit()
-    return message
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+    
+    return create_message(db, session_id, content=message_data.content)
 
-@router.put("/sessions/{session_id}/messages/{message_id}")
-async def update_message(session_id: int, message_id: int, message_data: MessageUpdate, db: Session = Depends(get_db)):
-    message = db.query(Message).filter(Message.id == message_id).first()
-    if not message:
-        raise HTTPException(status_code=404, detail="メッセージが見つかりません。")
-    message.content = message_data.content
-    db.commit()
-    return message
+
+# 特定のチャットの全メッセージを取得
+@router.get("/api/sessions/{session_id}/messages", response_model=list[MessageResponse])
+async def get_messages_endpoint(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == current_user.id
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+
+    return get_messages_by_session(db, session_id)
+
+
+# ユーザのメッセージを更新
+@router.put("/api/sessions/{session_id}/messages/{message_id}", response_model=MessageResponse)
+async def update_message(
+    session_id: int,
+    message_id: int,
+    message_data: MessageUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == current_user.id
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+
+    return update_user_message(db, message_id, message_data.content)
+
+
+# 特定のメッセージを削除
+@router.delete("/api/sessions/{session_id}/messages/{message_id}")
+async def delete_message_endpoint(
+    session_id: int,
+    message_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    session = db.query(ChatSession).filter(
+        ChatSession.id == session_id,
+        ChatSession.user_id == current_user.id
+    ).first()
+
+    if not session:
+        raise HTTPException(status_code=404, detail="チャットが見つかりません。")
+
+    delete_message(db, message_id)
+    return {"message": "メッセージを削除しました。"}

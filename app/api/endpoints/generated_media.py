@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import GeneratedMedia
-from app.models import GeneratedMedia
-from app.schemas.generated_media import GeneratedMediaCreate, GeneratedMediaResponse
-from app.core.database import get_db
+from sqlalchemy.orm import Session
+from models import GeneratedMedia
+from schemas.generated_media import GeneratedMediaCreate, GeneratedMediaResponse
+from core.database import get_db
+
+router = APIRouter()
 
 @router.post("/generated-media")
 async def create_generated_media(media_data: GeneratedMediaCreate, db: Session = Depends(get_db)):

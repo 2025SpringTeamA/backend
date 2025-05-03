@@ -7,8 +7,8 @@ class Favorite(Base, TimestampMixin):
     __tablename__ = "favorites"
 
     id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey("messages.id"))
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
 
-    message = relationship("Message", back_populates="favorites")
+    session = relationship("Session", back_populates="favorites")
     user = relationship("User", back_populates="favorites")

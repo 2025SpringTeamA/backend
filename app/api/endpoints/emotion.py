@@ -4,6 +4,8 @@ from app.models import Emotion
 from app.schemas.emotion import EmotionCreate, EmotionResponse
 from app.core.database import get_db
 
+router = APIRouter()
+
 @router.get("/emotions")
 async def get_emotions(db: Session = Depends(get_db)):
     emotions = db.query(Emotion).all()
