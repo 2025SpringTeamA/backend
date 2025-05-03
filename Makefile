@@ -16,6 +16,9 @@ exec-app:
 exec-db:
 	docker compose exec -it db bash
 
+db-shell:
+	docker compose exec -it db bash -c "mysql -u root -p"
+
 down:
 	docker compose down
 
