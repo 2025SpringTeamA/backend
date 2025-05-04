@@ -4,12 +4,12 @@ from api.endpoints import auth, user, session, message, generated_media
 router = APIRouter()
 
 # 認証用エンドポイント
-router.include_router(auth.router, prefix="/api", tags=["Auth"])
+router.include_router(auth.router, tags=["Auth"])
 # アカウント情報用エンドポイント
-router.include_router(user.router, prefix="/api", tags=["User"])
+router.include_router(user.router, tags=["User"])
 # チャット用エンドポイント
-router.include_router(session.router, prefix="/api", tags=["Session"])
+router.include_router(session.router, tags=["Session"])
 # メッセージ用エンドポイント
-router.include_router(message.router, prefix="/api", tags=["Message"])
+router.include_router(message.router, tags=["Message"])
 # 生成用エンドポイント
-router.include_router(generated_media.router, prefix="/api", tags=["Generated_media"])
+router.include_router(generated_media.router, tags=["Generated_media"])

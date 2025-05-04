@@ -36,9 +36,11 @@ class TokenResponse(BaseModel):
 
 # アカウント情報取得・レスポンス
 class UserResponse(BaseModel):
-    user_id: int
+    id: int
     email: EmailStr
     user_name: str
+    is_active: bool
+    can_be_deleted:  Optional[bool] = False # 管理画面の「削除可能」表示用
     created_at: datetime
     updated_at: datetime
 

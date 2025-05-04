@@ -1,22 +1,54 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from models.message import Message
-from schemas.message import MessageCreate, MessageResponse
+from models.message import Message, ResponseTypeEnum
+from models.session import Session as SessionModel, CharacterModeEnum
+from schemas.message import MessageResponse
+from services.ai.response import generate_ai_response
 
 
-# メッセージ（日記またはキャラクターの返答）を作成
-def create_message(
+
+# 日記を保存してキャラクターの返答を生成
+def create_message_with_ai(
     db: Session,
     session_id: int,
     content: str,
-    is_users: bool = True
 ) -> MessageResponse:
-    db_message = Message(session_id=session_id, content=content, is_users=is_users)
-    db.add(db_message)
+    # ユーザーの日記を保存
+    user_message = Message(
+        session_id=session_id,
+        content=content,
+        is_users=True
+    )
+    db.add(user_message)
     db.commit()
-    db.refresh(db_message)
-    return MessageResponse.from_orm(db_message)
+    db.refresh(user_message)
+    
+    # セッションを取得してモードを確認
+    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+    if session is None:
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+    character_mode = session.character_mode
+    
+    # AI返答を生成
+    ai_reply, response_type = generate_ai_response(
+        character_mode=character_mode,
+        user_input=content
+    )
+    
+    # AI返答を保存
+    ai_message = Message(
+        session_id=session_id,
+        content=ai_reply,
+        is_users=False,
+        response_type=response_type
+    )
+    db.add(ai_message)
+    db.commit()
+    db.refresh(ai_message)
+    
+    # AI返答を返す
+    return MessageResponse.from_orm(ai_message)
 
 
 # チャット内の全メッセージを取得
@@ -43,3 +75,4 @@ def delete_message(db: Session, message_id: int) -> None:
         raise HTTPException(status_code=404, detail="該当するメッセージが見つかりません")
     db.delete(db_message)
     db.commit()
+    

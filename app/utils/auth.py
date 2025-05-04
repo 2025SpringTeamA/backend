@@ -32,8 +32,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
-    
     credentials_exception = HTTPException(
         status_code=401,
         detail="認証情報が無効です",
@@ -52,4 +52,14 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         raise credentials_exception
     elif not user.is_active:
         raise HTTPException(status_code=403, detail="このアカウントは無効です")
+    return user
+
+
+def get_current_admin_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+)-> User:
+    user = get_current_user(db, token)
+    if not user.is_admin:
+        raise HTTPException(status_code=400, detail="管理者アカウントではありません")
     return user

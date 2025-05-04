@@ -11,7 +11,7 @@ from typing import Optional
 router = APIRouter()
 
 # チャットの開始
-@router.post("/api/sessions", response_model=SessionResponse)
+@router.post("/sessions", response_model=SessionResponse)
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
@@ -28,7 +28,7 @@ async def create_session(
 
 
 # チャット一覧取得
-@router.get("/api/sessions", response_model=list[SessionSummaryResponse])
+@router.get("/sessions", response_model=list[SessionSummaryResponse])
 async def get_sessions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -44,7 +44,7 @@ async def get_sessions(
 
 
 # 特定のチャットを取得
-@router.get("/api/sessions/{session_id}", response_model=SessionWithMessagesResponse)
+@router.get("/sessions/{session_id}", response_model=SessionWithMessagesResponse)
 async def get_session(
     session_id: int,
     db: Session = Depends(get_db),
@@ -74,7 +74,7 @@ async def get_session(
 
 
 # 特定のチャットを変更
-@router.patch("/api/sessions/{session_id}", response_model= SessionResponse)
+@router.patch("/sessions/{session_id}", response_model= SessionResponse)
 async def update_session(
     id: int, 
     session_data: SessionUpdate, 
@@ -100,7 +100,7 @@ async def update_session(
 
 
 # 特定のチャットを削除
-@router.delete("/api/sessions/{session_id}")
+@router.delete("/sessions/{session_id}")
 async def delete_session(
     session_id: int,
     db: Session = Depends(get_db),
@@ -113,7 +113,7 @@ async def delete_session(
 
 
 # お気に入りのトグル
-@router.post("/api/sessions/{session_id}/favorite")
+@router.post("/sessions/{session_id}/favorite")
 def toggle_favorite(
     session_id: int,
     db: Session = Depends(get_db),

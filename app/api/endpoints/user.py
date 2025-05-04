@@ -10,13 +10,13 @@ from utils.timestamp import now_jst
 router = APIRouter()
 
 # アカウント情報取得
-@router.get("/api/user", response_model=UserResponse)
+@router.get("/user", response_model=UserResponse)
 async def get_my_account(current_user: User = Depends(get_current_user)):
     return current_user
 
 
 # アカウント情報の更新
-@router.patch("/api/user", response_model=UserResponse)
+@router.patch("/user", response_model=UserResponse)
 async def update_my_account(
     user_update: UserUpdate,
     db: Session = Depends(get_db),
@@ -38,7 +38,7 @@ async def update_my_account(
 
 
 # パスワード変更 
-@router.put("/api/password")
+@router.put("/password")
 async def change_password(
     password_data: PasswordUpdate,
     db: Session = Depends(get_db),
@@ -54,7 +54,7 @@ async def change_password(
 
 
 # アカウント凍結
-@router.delete("/api/user")
+@router.delete("/user")
 async def deactivate_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -69,7 +69,7 @@ async def deactivate_account(
 
 
 # アカウント削除
-@router.delete("/api/user/delete")
+@router.delete("/user/delete")
 async def delete_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
