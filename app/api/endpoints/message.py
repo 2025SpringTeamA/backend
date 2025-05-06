@@ -1,33 +1,55 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import Request, APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from models import Message, Session as ChatSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+from models import Message, Session as SessionModel
 from models import User
 from schemas.message import MessageCreate, MessageResponse, MessageUpdate
 from core.database import get_db
 from utils.auth import get_current_user
-from services.message import create_message_with_ai, get_messages_by_session, update_user_message ,delete_message
+from services.message import create_message_with_ai, create_message as create_user_message, get_messages_by_session, update_user_message ,delete_message
 
 
 router = APIRouter()
+# レートリミッター
+limiter = Limiter(key_func=get_remote_address)
 
 
 # 日記の投稿またはキャラクターの返答を作成
-@router.post("/sessions/{session_id}/messages", response_model=MessageResponse)
+@router.post("/sessions/{session_id}/messages")
+@limiter.limit("2/minute")  # IPごとに2回/分
 async def create_message(
+    request: Request,
     session_id: int,
     message_data: MessageCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    # current_user: User = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        # SessionModel.user_id == current_user.id
+        SessionModel.user_id == 1 # テスト
     ).first()
 
     if not session:
-        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+        if message_data.character_mode is None:
+            raise HTTPException(status_code=400, detail="新規チャットの場合はcharacter_modeが必要です")
+        
+        # セッションを新規作成
+        session = SessionModel(
+            character_mode = message_data.character_mode,
+            # user_id = current_user.id
+            user_id = 1 # テスト用 
+        )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        
+    return create_user_message(db, session_id, content=message_data.content) #テスト
+
     
-    return create_message_with_ai(db, session_id, content=message_data.content)
+    # return create_message_with_ai(db, session_id, message_data.content)
 
 
 # 特定のチャットの全メッセージを取得
@@ -37,9 +59,9 @@ async def get_messages_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:
@@ -57,9 +79,9 @@ async def update_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:
@@ -76,9 +98,9 @@ async def delete_message_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:

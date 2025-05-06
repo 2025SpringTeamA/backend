@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from models import Session as ChatSession
+from models import Session as SessionModel
 from models import Favorite, User
 from schemas.session import SessionCreate, SessionUpdate, SessionResponse, SessionWithMessagesResponse, SessionSummaryResponse
 from core.database import get_db
@@ -15,11 +15,12 @@ router = APIRouter()
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    # current_user: User = Depends(get_current_user)
     ):
-    new_session = ChatSession(
+    new_session = SessionModel(
         character_mode=session_data.character_mode,
-        user_id=current_user.id
+        # user_id=current_user.id
+        user_id=1
     )
     db.add(new_session)
     db.commit()
@@ -50,9 +51,9 @@ async def get_session(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:
@@ -61,7 +62,7 @@ async def get_session(
     messages =[{
         "message_id": m.id,
         "message_text": m.content,
-        "sender_type": "user" if m.is_users else "ai"
+        "sender_type": "user" if m.is_user else "ai"
     } for m in session.messages
     ]
     
@@ -82,9 +83,9 @@ async def update_session(
     current_user : User= Depends(get_current_user)
     ):
 
-    session = db.query(ChatSession).filter(
-        ChatSession.id == id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:

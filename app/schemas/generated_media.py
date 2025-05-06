@@ -13,7 +13,7 @@ class GeneratedMediaBase(BaseModel):
     media_type: MediaType
     image_prompt: Optional[str] = None
     bgm_prompt: Optional[str] = None
-    bgm_duration: Optional[str] = None
+    bgm_duration: Optional[int] = None
 
 class GeneratedMediaCreate(GeneratedMediaBase):
     pass

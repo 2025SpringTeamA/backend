@@ -9,12 +9,13 @@ class ResponseType(str, Enum):
 
 class MessageBase(BaseModel):
     session_id: int
-    is_users: bool
+    is_user: bool
     response_type: Optional[ResponseType] = None
     content: str
 
 class MessageCreate(MessageBase):
-    pass
+    content: str
+    character_mode: Optional[str] = None
 
 class MessageUpdate(BaseModel):
     content: str

@@ -6,11 +6,14 @@ from core.database import get_db
 
 router = APIRouter()
 
+# 感情一覧取得
 @router.get("/emotions")
 async def get_emotions(db: Session = Depends(get_db)):
     emotions = db.query(Emotion).all()
     return emotions
 
+
+# 感情登録
 @router.post("/emotions")
 async def create_emotions(emotion_data: EmotionCreate, db: Session = Depends(get_db)):
     new_emotion = Emotion(emotion=emotion_data.emotion)

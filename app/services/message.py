@@ -4,7 +4,33 @@ from typing import List
 from models.message import Message, ResponseTypeEnum
 from models.session import Session as SessionModel, CharacterModeEnum
 from schemas.message import MessageResponse
-from services.ai.response import generate_ai_response
+from services.ai.generator import generate_ai_response
+
+
+# テスト用-日記を保存
+def create_message(
+    db: Session,
+    session_id: int,
+    content: str,
+) -> MessageResponse:
+    # ユーザーの日記を保存
+    user_message = Message(
+        session_id=session_id,
+        content=content,
+        is_user=True
+    )
+    db.add(user_message)
+    db.commit()
+    db.refresh(user_message)
+    
+    # セッションを取得してモードを確認
+    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+    if session is None:
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+    character_mode = session.character_mode
+
+    return MessageResponse.from_orm(user_message), character_mode
+
 
 
 
@@ -18,7 +44,7 @@ def create_message_with_ai(
     user_message = Message(
         session_id=session_id,
         content=content,
-        is_users=True
+        is_user=True
     )
     db.add(user_message)
     db.commit()
@@ -40,7 +66,7 @@ def create_message_with_ai(
     ai_message = Message(
         session_id=session_id,
         content=ai_reply,
-        is_users=False,
+        is_user=False,
         response_type=response_type
     )
     db.add(ai_message)
@@ -59,7 +85,7 @@ def get_messages_by_session(db: Session, session_id: int) -> List[MessageRespons
 
 # メッセージを更新
 def update_user_message(db: Session, message_id: int, new_content: str) -> MessageResponse:
-    db_message = db.query(Message).filter(Message.id == message_id, Message.is_users == True).first()
+    db_message = db.query(Message).filter(Message.id == message_id, Message.is_user == True).first()
     if db_message is None:
         raise HTTPException(status_code=404, detail="該当するメッセージが見つかりません") #　もしくはreturn None
     db_message.content = new_content

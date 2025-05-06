@@ -13,7 +13,7 @@ class Message(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
-    is_users = Column(Boolean, default=True)
+    is_user = Column(Boolean, default=True)
     response_type = Column(Enum(ResponseTypeEnum))
     content = Column(Text, nullable=False)
 

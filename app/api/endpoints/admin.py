@@ -168,15 +168,18 @@ async def update_user(
 
 
 # TODO:削除？:投稿一覧
-@router.get("/messages")
-async def get_messages(db: Session = Depends(get_db), current_admin: Admin = Depends(get_current_admin)):
-    messages = db.query(Message).all()
-    return messages
+# @router.get("/messages")
+# async def get_messages(db: Session = Depends(get_db), current_admin: Admin = Depends(get_current_admin)):
+#     messages = db.query(Message).all()
+#     return messages
 
 # TODO:設定変更
-@router.patch("/settings")
-async def update_settings(new_message: str, db: Session = Depends(get_db), current_admin: Admin = Depends(get_current_admin)):
-    settings = db.query(Settings).first()
-    settings.support_message = new_message
-    db.commit()
-    return {"message": "設定が更新されました。"}
+# @router.patch("/settings")
+# async def update_settings(
+#     new_message: str,
+#     db: Session = Depends(get_db),
+#     current_admin: User = Depends(get_current_admin_user)):
+#     settings = db.query().first()
+#     settings.support_message = new_message
+#     db.commit()
+#     return {"message": "設定が更新されました。"}
