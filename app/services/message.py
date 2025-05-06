@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 from typing import List
 from models.message import Message, ResponseTypeEnum
 from models.session import Session as SessionModel, CharacterModeEnum
@@ -35,7 +36,7 @@ def create_message(
 
 
 # 日記を保存してキャラクターの返答を生成
-def create_message_with_ai(
+async def create_message_with_ai(
     db: Session,
     session_id: int,
     content: str,
@@ -57,7 +58,8 @@ def create_message_with_ai(
     character_mode = session.character_mode
     
     # AI返答を生成
-    ai_reply, response_type = generate_ai_response(
+    ai_reply, response_type = await run_in_threadpool(
+        generate_ai_response,
         character_mode=character_mode,
         user_input=content
     )

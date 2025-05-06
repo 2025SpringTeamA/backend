@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     openai_model: str ="gpt-4.1-nano"
     
     # AWS S3
-    aws_access_key_id: str
-    aws_secret_access_key: str
-    aws_s3_bucket_name: str
-    aws_region: str = "ap-northeast-1"
+    # aws_access_key_id: str
+    # aws_secret_access_key: str
+    # aws_s3_bucket_name: str
+    # aws_region: str = "ap-northeast-1"
 
 
     # Database

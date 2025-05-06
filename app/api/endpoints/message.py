@@ -33,23 +33,19 @@ async def create_message(
     ).first()
 
     if not session:
-        if message_data.character_mode is None:
-            raise HTTPException(status_code=400, detail="新規チャットの場合はcharacter_modeが必要です")
+        raise HTTPException(status_code=404, detail="チャットが見つかりません")
+    print(f"session_id>>{session_id}")
         
-        # セッションを新規作成
-        session = SessionModel(
-            character_mode = message_data.character_mode,
-            # user_id = current_user.id
-            user_id = 1 # テスト用 
-        )
-        db.add(session)
-        db.commit()
-        db.refresh(session)
-        
-    return create_user_message(db, session_id, content=message_data.content) #テスト
+    # return create_user_message(db, session_id, content=message_data.content) #テスト
 
-    
-    # return create_message_with_ai(db, session_id, message_data.content)
+    try:
+        return await create_message_with_ai(db, session_id, message_data.content)
+    except HTTPException as e:
+        print(f"HTTPエラー: {e.detail}") 
+        raise e
+    except Exception as e:
+        print(f"未処理エラー:{e}")
+        raise HTTPException(status_code=500, detail="サーバ内部エラー")
 
 
 # 特定のチャットの全メッセージを取得

@@ -29,6 +29,11 @@ def generate_ai_response(
     character_mode: CharacterModeEnum,
     user_input: str
     )->tuple[str, ResponseTypeEnum]:
+    
+    # ===テスト
+    # models = client.models.list()
+    # print([m.id for m in models.data])
+    # ====確認用
 
     if character_mode == CharacterModeEnum.saburo:
         prompt_data = CHARACTER_PROMPTS["saburo"]
@@ -63,9 +68,11 @@ def generate_ai_response(
     #     raise HTTPException(status_code=429, detail="APIのレート制限を超えました。しばらくしてから再度お試しください")
     except AuthenticationError:
         raise HTTPException(status_code=401, detail="OpenAIの認証に失敗しました。APIキーを確認してください")
-    except APIError:
+    except APIError as e:
+        print(f"OpenAIサーバでエラー: {e}")
         raise HTTPException(status_code=502, detail="OpenAIサーバでエラーが発生しました")
     except Exception as e:
+        print(f"AI生成中のエラー: {e}")
         raise HTTPException(status_code=500, detail=f"AI応答の生成中にエラーが発生しました: {str(e)}")
 
 

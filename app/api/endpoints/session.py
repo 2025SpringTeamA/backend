@@ -15,11 +15,11 @@ router = APIRouter()
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user)
+    # current_user: User = Depends(get_current_user)　# テスト
     ):
     new_session = SessionModel(
         character_mode=session_data.character_mode,
-        # user_id=current_user.id
+        # user_id=current_user.id # テスト
         user_id=1
     )
     db.add(new_session)

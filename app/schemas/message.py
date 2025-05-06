@@ -14,8 +14,7 @@ class MessageBase(BaseModel):
     content: str
 
 class MessageCreate(MessageBase):
-    content: str
-    character_mode: Optional[str] = None
+    pass
 
 class MessageUpdate(BaseModel):
     content: str
