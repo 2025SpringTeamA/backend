@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     # OpenAI Model
     openai_model: str ="gpt-4.1-nano"
     
+    
+    # AWS Bedrock
+    MODEL_ID : str ="anthropic.claude-instant-v1"
+    REGION : str ="ap-northeast-1"
+    
+    
+    
     # AWS S3
     # aws_access_key_id: str
     # aws_secret_access_key: str

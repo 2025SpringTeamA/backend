@@ -5,7 +5,7 @@ from typing import List
 from models.message import Message, ResponseTypeEnum
 from models.session import Session as SessionModel, CharacterModeEnum
 from schemas.message import MessageResponse
-from services.ai.generator import generate_ai_response
+from services.ai.generator import generate_ai_response, generate_ai_response_via_bedrock
 
 
 # テスト用-日記を保存
@@ -50,6 +50,7 @@ async def create_message_with_ai(
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
+    print("ユーザーの日記を保存")
     
     # セッションを取得してモードを確認
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
@@ -58,8 +59,13 @@ async def create_message_with_ai(
     character_mode = session.character_mode
     
     # AI返答を生成
+    # ai_reply, response_type = await run_in_threadpool(
+    #     # generate_ai_response,
+    #     character_mode=character_mode,
+    #     user_input=content
+    # )
     ai_reply, response_type = await run_in_threadpool(
-        generate_ai_response,
+        generate_ai_response_via_bedrock,
         character_mode=character_mode,
         user_input=content
     )
