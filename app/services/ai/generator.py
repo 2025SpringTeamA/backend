@@ -70,7 +70,6 @@ def generate_ai_response_via_bedrock(
     
     # Claude形式のプロンプトを作成
     prompt = f"Human: {prompt_data['description']}\n{prompt_data['prompt']}\nユーザーの日記：{user_input}\nAssistant:"
-    print(f"Bedrockへのプロンプト>>>{prompt}")
     
     try:
         response = bedrock.invoke_model(

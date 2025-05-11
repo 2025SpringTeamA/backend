@@ -1,12 +1,16 @@
+from datetime import datetime, timedelta
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models import Session as SessionModel
-from models import Favorite, User
+from models import User
 from schemas.session import SessionCreate, SessionUpdate, SessionResponse, SessionWithMessagesResponse, SessionSummaryResponse
 from core.database import get_db
 from utils.auth import get_current_user
+from utils.timestamp import now_jst
 from services.session import get_sessions_with_first_message, toggle_favorite_session
-from typing import Optional
+
 
 router = APIRouter()
 
@@ -15,12 +19,31 @@ router = APIRouter()
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user)　# テスト
+    # current_user: User = Depends(get_current_user) # テスト
     ):
+    
+    # user_id=current_user.id # テスト
+    user_id=1
+    today = now_jst().date()
+    
+    # 当日のセッションを確認
+    existing_session = db.query(SessionModel).filter(
+        SessionModel.user_id == user_id,
+        SessionModel.created_at >= datetime.combine(today, datetime.min.time()),
+        SessionModel.created_at <= datetime.combine(today, datetime.max.time())
+    ).first()
+    
+    if existing_session:
+        # 1日１回制限：エラーメッセージで伝える
+        raise HTTPException(
+            status_code=403,
+            detail="今日はすでにチャットを開始しています。明日またご利用ください。"
+        )
+    
+    
     new_session = SessionModel(
         character_mode=session_data.character_mode,
-        # user_id=current_user.id # テスト
-        user_id=1
+        user_id=user_id
     )
     db.add(new_session)
     db.commit()

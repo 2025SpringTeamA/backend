@@ -36,7 +36,7 @@ async def create_message(
         raise HTTPException(status_code=404, detail="チャットが見つかりません")
     print(f"session_id>>{session_id}")
         
-    # return create_user_message(db, session_id, content=message_data.content) #テスト
+    return create_user_message(db, session_id, content=message_data.content) #テスト
 
     try:
         return await create_message_with_ai(db, session_id, message_data.content)
