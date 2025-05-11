@@ -6,8 +6,11 @@ from core.database import get_db
 
 router = APIRouter()
 
-@router.post("/generated-media")
-async def create_generated_media(media_data: GeneratedMediaCreate, db: Session = Depends(get_db)):
+@router.post("/generated-media", response_model=GeneratedMediaResponse)
+async def create_generated_media(
+    media_data: GeneratedMediaCreate,
+    db: Session = Depends(get_db)
+):
     new_media = GeneratedMedia(
         message_id=media_data.message_id,
         emotion_id=media_data.emotion_id,
@@ -16,4 +19,5 @@ async def create_generated_media(media_data: GeneratedMediaCreate, db: Session =
     ) 
     db.add(new_media)
     db.commit()
+    db.refresh(new_media)
     return new_media

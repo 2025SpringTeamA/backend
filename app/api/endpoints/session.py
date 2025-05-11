@@ -1,25 +1,49 @@
+from datetime import datetime, timedelta
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from models import Session as ChatSession
-from models import Favorite, User
+from models import Session as SessionModel
+from models import User
 from schemas.session import SessionCreate, SessionUpdate, SessionResponse, SessionWithMessagesResponse, SessionSummaryResponse
 from core.database import get_db
 from utils.auth import get_current_user
+from utils.timestamp import now_jst
 from services.session import get_sessions_with_first_message, toggle_favorite_session
-from typing import Optional
+
 
 router = APIRouter()
 
 # チャットの開始
-@router.post("/api/sessions", response_model=SessionResponse)
+@router.post("/sessions", response_model=SessionResponse)
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    # current_user: User = Depends(get_current_user) # テスト
     ):
-    new_session = ChatSession(
+    
+    # user_id=current_user.id # テスト
+    user_id=1
+    today = now_jst().date()
+    
+    # 当日のセッションを確認
+    existing_session = db.query(SessionModel).filter(
+        SessionModel.user_id == user_id,
+        SessionModel.created_at >= datetime.combine(today, datetime.min.time()),
+        SessionModel.created_at <= datetime.combine(today, datetime.max.time())
+    ).first()
+    
+    if existing_session:
+        # 1日１回制限：エラーメッセージで伝える
+        raise HTTPException(
+            status_code=403,
+            detail="今日はすでにチャットを開始しています。明日またご利用ください。"
+        )
+    
+    
+    new_session = SessionModel(
         character_mode=session_data.character_mode,
-        user_id=current_user.id
+        user_id=user_id
     )
     db.add(new_session)
     db.commit()
@@ -28,7 +52,7 @@ async def create_session(
 
 
 # チャット一覧取得
-@router.get("/api/sessions", response_model=list[SessionSummaryResponse])
+@router.get("/sessions", response_model=list[SessionSummaryResponse])
 async def get_sessions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -44,15 +68,15 @@ async def get_sessions(
 
 
 # 特定のチャットを取得
-@router.get("/api/sessions/{session_id}", response_model=SessionWithMessagesResponse)
+@router.get("/sessions/{session_id}", response_model=SessionWithMessagesResponse)
 async def get_session(
     session_id: int,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == session_id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:
@@ -61,7 +85,7 @@ async def get_session(
     messages =[{
         "message_id": m.id,
         "message_text": m.content,
-        "sender_type": "user" if m.is_users else "ai"
+        "sender_type": "user" if m.is_user else "ai"
     } for m in session.messages
     ]
     
@@ -74,7 +98,7 @@ async def get_session(
 
 
 # 特定のチャットを変更
-@router.patch("/api/sessions/{session_id}", response_model= SessionResponse)
+@router.patch("/sessions/{session_id}", response_model= SessionResponse)
 async def update_session(
     id: int, 
     session_data: SessionUpdate, 
@@ -82,9 +106,9 @@ async def update_session(
     current_user : User= Depends(get_current_user)
     ):
 
-    session = db.query(ChatSession).filter(
-        ChatSession.id == id,
-        ChatSession.user_id == current_user.id
+    session = db.query(SessionModel).filter(
+        SessionModel.id == id,
+        SessionModel.user_id == current_user.id
     ).first()
 
     if not session:
@@ -100,7 +124,7 @@ async def update_session(
 
 
 # 特定のチャットを削除
-@router.delete("/api/sessions/{session_id}")
+@router.delete("/sessions/{session_id}")
 async def delete_session(
     session_id: int,
     db: Session = Depends(get_db),
@@ -113,7 +137,7 @@ async def delete_session(
 
 
 # お気に入りのトグル
-@router.post("/api/sessions/{session_id}/favorite")
+@router.post("/sessions/{session_id}/favorite")
 def toggle_favorite(
     session_id: int,
     db: Session = Depends(get_db),

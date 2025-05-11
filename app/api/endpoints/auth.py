@@ -27,7 +27,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     token = create_access_token({"sub": str(new_user.id)})
-    return {"token": token}
+    return {"token": token, "is_admin": new_user.is_admin}
 
 
 # ログイン

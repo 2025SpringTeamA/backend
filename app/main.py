@@ -1,16 +1,23 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+
 import os
-from api.endpoints.auth import router as auth_router
-from api.endpoints.user import router as user_router
-from api.endpoints.session import router as session_router
-from api.endpoints.message import router as message_router
-from api.endpoints.generated_media import router as generated_media_router
+from api.api import router as api_router
+
 
 
 app = FastAPI()
 
+# レートリミットの設定
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # ✅ CORS設定（Next.jsからアクセス可能にする）
 app.add_middleware(
@@ -41,19 +48,6 @@ def db_status():
             return {"db_status": "not connected"}
     except Exception as e:
         return {"db_status": "error", "details": str(e)}
-
-
-# 認証用エンドポイント
-app.include_router(auth_router, prefix="/api", tags=["auth"])
-
-# アカウント情報用エンドポイント
-app.include_router(user_router, prefix="/api", tags=["user"])
-
-# チャット用エンドポイント
-app.include_router(session_router, prefix="/api", tags=["session"])
-
-# メッセージ用エンドポイント
-app.include_router(message_router, prefix="/api", tags=["message"])
-
-# 生成用エンドポイント
-app.include_router(generated_media_router, prefix="/api", tags=["generated_media"])
+    
+    
+app.include_router(api_router, prefix="/api")
