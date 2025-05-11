@@ -24,19 +24,19 @@ async def create_message(
     session_id: int,
     message_data: MessageCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     session = db.query(SessionModel).filter(
         SessionModel.id == session_id,
-        # SessionModel.user_id == current_user.id
-        SessionModel.user_id == 1 # テスト
+        SessionModel.user_id == current_user.id
+        # SessionModel.user_id == 1 # テスト
     ).first()
 
     if not session:
         raise HTTPException(status_code=404, detail="チャットが見つかりません")
     print(f"session_id>>{session_id}")
         
-    return create_user_message(db, session_id, content=message_data.content) #テスト
+    # return create_user_message(db, session_id, content=message_data.content) #テスト
 
     try:
         return await create_message_with_ai(db, session_id, message_data.content)
