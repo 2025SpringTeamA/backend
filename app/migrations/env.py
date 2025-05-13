@@ -1,17 +1,18 @@
 from logging.config import fileConfig
 import os , sys
 from pathlib import Path
-
 from sqlalchemy import engine_from_config, pool
-
 from alembic import context
-from dotenv import load_dotenv
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-load_dotenv()
+# .envはローカル環境のみ読み込む
+if os.getenv("ENV") != "production":
+    from dotenv import load_dotenv
+    load_dotenv()
+
 database_url = os.getenv("DATABASE_URL")
 if database_url is None:
     raise ValueError("DATABASE_URLの環境変数が見つかりません。")
