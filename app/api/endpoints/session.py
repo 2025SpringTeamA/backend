@@ -19,11 +19,11 @@ router = APIRouter()
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user) # テスト
+    current_user: User = Depends(get_current_user)
     ):
     
-    # user_id=current_user.id # テスト
-    user_id=1
+    user_id=current_user.id
+    # user_id=1
     today = now_jst().date()
     
     # 当日のセッションを確認

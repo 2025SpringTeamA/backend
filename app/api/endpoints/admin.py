@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from datetime import timedelta
+from sqlalchemy.orm import Session, joinedload
+from datetime import datetime, timedelta
 from models import User, Message
 from schemas.user import UserRegister, UserLogin, UserUpdate, UserResponse, TokenResponse
+from schemas.message import AdminMessageResponse
 from core.config import settings
 from core.database import get_db
+from services.session import get_all_sessions_with_first_message
 from utils.auth import hash_password, verify_password, create_access_token, get_current_admin_user
 from utils.timestamp import now_jst
 
@@ -51,8 +53,8 @@ async def login_admin(
     if str(admin_data.pin_code) != settings.ADMIN_PIN_CODE:
         raise HTTPException(status_code=400, detail="PINコードが正しくありません")
     
-    token = create_access_token({"sub": str(admin_data.id)})
-    return {"token": token, "is_admin": admin_data.is_admin}
+    token = create_access_token({"sub": str(admin.id)})
+    return {"token": token, "is_admin": admin.is_admin}
 
 
 # 管理者アカウント情報取得
@@ -69,11 +71,11 @@ async def get_all_users(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    users = db.query(User).filter(User.is_admin==False).all()
-    now = now_jst()
+    users = db.query(User).filter(User.is_admin==False).all()  
+    now = datetime.now()
     return [
         UserResponse(
-            user_id=user.id,
+            id=user.id,
             email=user.email,
             user_name=user.user_name,
             is_active=user.is_active,
@@ -167,19 +169,10 @@ async def update_user(
     return {"message": "ユーザー情報が更新されました"}
 
 
-# TODO:削除？:投稿一覧
-# @router.get("/messages")
-# async def get_messages(db: Session = Depends(get_db), current_admin: Admin = Depends(get_current_admin)):
-#     messages = db.query(Message).all()
-#     return messages
-
-# TODO:設定変更
-# @router.patch("/settings")
-# async def update_settings(
-#     new_message: str,
-#     db: Session = Depends(get_db),
-#     current_admin: User = Depends(get_current_admin_user)):
-#     settings = db.query().first()
-#     settings.support_message = new_message
-#     db.commit()
-#     return {"message": "設定が更新されました。"}
+# 投稿一覧
+@router.get("/messages", response_model=list[AdminMessageResponse])
+async def get_messages(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+    ):
+    return get_all_sessions_with_first_message(db)

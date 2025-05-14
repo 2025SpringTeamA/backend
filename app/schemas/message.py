@@ -2,6 +2,8 @@ from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from schemas.user import UserResponse
+
 
 class ResponseType(str, Enum):
     PRAISE = "praise"
@@ -21,8 +23,17 @@ class MessageUpdate(BaseModel):
 
 class MessageResponse(MessageBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    user: Optional[UserResponse] = None
+
+
+# 管理者投稿一覧表示
+class AdminMessageResponse(BaseModel):
+    user_name: str
+    content: str
+    created_at: Optional[datetime]
+
 
     class Config:
         from_attributes = True

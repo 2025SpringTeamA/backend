@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import cast, String, or_
 from models.session import Session as SessionModel
 from models.message import Message
 from models.favorite import Favorite
@@ -6,6 +7,7 @@ from schemas.session import SessionSummaryResponse
 from fastapi import HTTPException
 
 
+# チャット履歴取得
 def get_sessions_with_first_message(
     db: Session, 
     user_id: int,
@@ -16,14 +18,20 @@ def get_sessions_with_first_message(
     
     if favorite_only or keyword:
         query = query.join(SessionModel.messages)
-    
+        
     if favorite_only:
         query = query.join(SessionModel.favorites)
         
+    # 　キーワード検索
     if keyword:
-        query = query.filter(Message.content.ilike(f"%{keyword}%"))
-    
-    sessions = query.distinct().all()
+        query = query.join(SessionModel.messages).filter(
+            or_(
+                Message.content.ilike(f"%{keyword}%"),
+                cast(SessionModel.created_at, String).ilike(f"%{keyword}%")
+            )
+        )
+        
+    sessions =  query.distinct().all()
 
     result = []
     for session in sessions:
@@ -49,6 +57,34 @@ def get_sessions_with_first_message(
     return result
 
 
+# 管理者用投稿内容一覧
+def get_all_sessions_with_first_message(
+    db:Session,
+)-> list[dict]:
+    sessions = db.query(SessionModel).join(SessionModel.user).all()
+    result = []
+    for session in sessions:
+        first_user_message = (
+            db.query(Message)
+            .filter(
+                Message.session_id == session.id,
+                Message.is_user == True
+            )
+            .order_by(Message.created_at.asc())
+            .first()
+        )
+        
+        if first_user_message:
+            result.append({
+                "user_name": session.user.user_name,
+                "content": first_user_message.content,
+                "created_at": first_user_message.created_at or session.created_at,
+            })
+    return result
+
+
+
+# 履歴削除
 def delete_session(
     db: Session,
     session_id: int,
@@ -67,6 +103,7 @@ def delete_session(
     return True
 
 
+# お気に入りのトグル
 def toggle_favorite_session(
     db: Session,
     session_id: int,

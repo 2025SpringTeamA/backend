@@ -21,6 +21,7 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     user_name: Optional[str] = None
+    password: Optional[str] = None
     
 
 # パスワード変更・リクエスト
@@ -41,8 +42,6 @@ class UserResponse(BaseModel):
     user_name: str
     is_active: bool
     can_be_deleted:  Optional[bool] = False # 管理画面の「削除可能」表示用
-    created_at: datetime
-    updated_at: datetime
 
     class Config:
         from_attributes = True
