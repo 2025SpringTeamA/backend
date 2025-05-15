@@ -34,7 +34,6 @@ async def create_message(
 
     if not session:
         raise HTTPException(status_code=404, detail="チャットが見つかりません")
-    print(f"session_id>>{session_id}")
         
     # return create_user_message(db, session_id, content=message_data.content) #テスト
 

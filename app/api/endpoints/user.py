@@ -22,8 +22,6 @@ async def update_my_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    print(f"更新前current_user>>{current_user.user_name}")
-    print(f"リクエスト>>{user_update}")
     # ユーザ名の更新
     if user_update.user_name and user_update.user_name != current_user.user_name:
         current_user.user_name  = user_update.user_name 
@@ -41,7 +39,6 @@ async def update_my_account(
     
     db.commit()
     db.refresh(current_user)
-    print(f"更新後current_user>>{current_user.user_name}")
     return current_user
 
 
