@@ -22,15 +22,20 @@ async def update_my_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # ユーザ名の更新
+    if user_update.user_name and user_update.user_name != current_user.user_name:
+        current_user.user_name  = user_update.user_name 
+    
     # メールアドレスの更新
     if user_update.email and user_update.email != current_user.email:
         # 他のユーザと重複していないかチェック
         if db.query(User).filter_by(email=user_update.email).first():
             raise HTTPException(status_code=400, detail="このメールアドレスはすでに使われています")
         current_user.email = user_update.email
-    
-    if user_update.user_name:
-        current_user.user_name = user_update.user_name
+
+    # パスワードの更新
+    if user_update.password:
+        current_user.password_hash = hash_password(user_update.password)
     
     db.commit()
     db.refresh(current_user)

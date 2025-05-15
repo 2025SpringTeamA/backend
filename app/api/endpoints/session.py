@@ -9,7 +9,7 @@ from schemas.session import SessionCreate, SessionUpdate, SessionResponse, Sessi
 from core.database import get_db
 from utils.auth import get_current_user
 from utils.timestamp import now_jst
-from services.session import get_sessions_with_first_message, toggle_favorite_session
+from services.session import get_sessions_with_first_message, toggle_favorite_session, delete_session
 
 
 router = APIRouter()
@@ -19,11 +19,11 @@ router = APIRouter()
 async def create_session(
     session_data: SessionCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user) # テスト
+    current_user: User = Depends(get_current_user)
     ):
     
-    # user_id=current_user.id # テスト
-    user_id=1
+    user_id=current_user.id
+    # user_id=1
     today = now_jst().date()
     
     # 当日のセッションを確認
@@ -125,7 +125,7 @@ async def update_session(
 
 # 特定のチャットを削除
 @router.delete("/sessions/{session_id}")
-async def delete_session(
+async def delete_session_route(
     session_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
