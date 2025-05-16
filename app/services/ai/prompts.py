@@ -50,12 +50,3 @@ CHARACTER_PROMPTS= {
             )
     }
 }
-
-
-EMOTION_IMAGE_PROMPTS = {
-    "疲れた": "A peaceful nature scene with soft sunlight and blooming flowers, evoking rest and hope, digital art, soft pastel colors",
-    "眠い": "A cozy bedroom with warm lighting, a cat sleeping on a bed, peaceful and dreamy atmosphere, digital painting, warm tones",
-    "イライラする": "A calm lake at sunset, soothing and peaceful atmosphere, realistic landscape, golden hour lighting",
-    "悲しい": "A beautiful field of sunflowers under a clear sky, uplifting and full of light, watercolor style",
-    "不安": "A safe cozy space with a cup of tea and soft cushions, calming and reassuring, studio lighting, concept art"
-}
