@@ -2,7 +2,9 @@ from fastapi import Query
 from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from schemas.message import MessageDetail
+
 
 class CharacterMode(str, Enum):
     SABURO = "saburo"
@@ -14,7 +16,6 @@ class SessionQueryParams(BaseModel):
     keyword: Optional[str] = None
 
 class SessionBase(BaseModel):
-    user_id: int
     character_mode: CharacterMode
 
 class SessionCreate(SessionBase):
@@ -29,6 +30,7 @@ class SessionUpdate(BaseModel):
 
 class SessionResponse(SessionBase):
     id: int
+    user_id: int
     created_at: datetime
     updated_at: datetime
 
@@ -52,9 +54,15 @@ class MessageSummary(BaseModel):
     sender_type : str # "user" or "ai"
     
 
-class SessionWithMessagesResponse(SessionResponse):
-    chat_id: int
-    messages: list[MessageSummary] = []
+# class SessionWithMessagesResponse(SessionResponse):
+#     session_id: int
+#     messages: list[MessageSummary] = []
+#     created_at: datetime
+#     updated_at: datetime
+    
+    
+class SessionWithMessagesResponse(BaseModel):
+    session_id: int
     created_at: datetime
     updated_at: datetime
-    
+    messages: List[MessageDetail]

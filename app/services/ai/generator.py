@@ -20,7 +20,7 @@ from models.message import ResponseTypeEnum
 # AWS Bedrock(Claude Instantモデル)版AI応答生成
 # ===========================================
 
-bedrock = boto3.client("bedrock-runtime", region_name=settings.REGION)
+# bedrock = boto3.client("bedrock-runtime", region_name=settings.REGION)
 
 # 起動時 or 初回リスエスト時に接続確認
 def verify_bedrock_connection():
@@ -110,7 +110,7 @@ def stop_generate_sentence(text: str)-> str:
 # =========================
 
 # OpenAIクライアント初期化
-# client = OpenAI(api_key=settings.openai_api_key)
+client = OpenAI(api_key=settings.openai_api_key)
 
 # AI応答のOpenAI呼び出し（リトライ付き）
 @retry(

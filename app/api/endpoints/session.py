@@ -23,7 +23,6 @@ async def create_session(
     ):
     
     user_id=current_user.id
-    # user_id=1
     today = now_jst().date()
     
     # 当日のセッションを確認
@@ -33,12 +32,12 @@ async def create_session(
         SessionModel.created_at <= datetime.combine(today, datetime.max.time())
     ).first()
     
-    if existing_session:
-        # 1日１回制限：エラーメッセージで伝える
-        raise HTTPException(
-            status_code=403,
-            detail="今日はすでにチャットを開始しています。明日またご利用ください。"
-        )
+    # if existing_session:
+    #     # 1日１回制限：エラーメッセージで伝える
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail="今日はすでにチャットを開始しています。明日またご利用ください。"
+    #     )
     
     
     new_session = SessionModel(
@@ -90,7 +89,7 @@ async def get_session(
     ]
     
     return {
-        "chat_id" : session.id,
+        "session_id" : session.id,
         "messages" : messages,
         "created_at": session.created_at,
         "updated_at": session.updated_at,

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session, joinedload
+from zoneinfo import ZoneInfo
+
 from datetime import datetime, timedelta
 from models import User, Message
 from schemas.user import UserRegister, UserLogin, UserUpdate, UserResponse, TokenResponse
@@ -101,10 +103,6 @@ async def delete_user(
     
     if user.is_active or not user.deleted_at:
         raise HTTPException(status_code=400, detail="無効化されたアカウントのみ削除可能です")
-    
-    now = now_jst()
-    if user.deleted_at + timedelta(days=30) > now:
-        raise HTTPException(status_code=400, detail=f"{now - user.deleted_at}日後に削除可能です")
     
     db.delete(user)
     db.commit()

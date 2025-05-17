@@ -60,7 +60,7 @@ async def create_message_with_ai(
     
     # AI返答を生成
     ai_reply, response_type = await run_in_threadpool(
-        # generate_ai_response, # Open API用
+        generate_ai_response, # Open API用
         # generate_ai_response_via_bedrock, # Amazon Bedrock用
         character_mode=character_mode,
         user_input=content
