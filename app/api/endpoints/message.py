@@ -29,7 +29,6 @@ async def create_message(
     session = db.query(SessionModel).filter(
         SessionModel.id == session_id,
         SessionModel.user_id == current_user.id
-        # SessionModel.user_id == 1 # テスト
     ).first()
 
     if not session:

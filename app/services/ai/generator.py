@@ -20,7 +20,7 @@ from models.message import ResponseTypeEnum
 # AWS Bedrock(Claude Instantモデル)版AI応答生成
 # ===========================================
 
-# bedrock = boto3.client("bedrock-runtime", region_name=settings.REGION)
+bedrock = boto3.client("bedrock-runtime", region_name=settings.REGION)
 
 # 起動時 or 初回リスエスト時に接続確認
 def verify_bedrock_connection():
@@ -67,6 +67,7 @@ def generate_ai_response_via_bedrock(
     
     # Claude形式のプロンプトを作成
     prompt = f"Human: {prompt_data['description']}\n{prompt_data['prompt']}\nユーザーの日記：{user_input}\nAssistant:"
+    print("Bedrockへのプロンプト>>>",prompt)
     
     try:
         response = bedrock.invoke_model(

@@ -53,13 +53,6 @@ class MessageSummary(BaseModel):
     message_text: str
     sender_type : str # "user" or "ai"
     
-
-# class SessionWithMessagesResponse(SessionResponse):
-#     session_id: int
-#     messages: list[MessageSummary] = []
-#     created_at: datetime
-#     updated_at: datetime
-    
     
 class SessionWithMessagesResponse(BaseModel):
     session_id: int
