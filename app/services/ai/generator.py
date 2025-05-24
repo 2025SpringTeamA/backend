@@ -95,8 +95,9 @@ def generate_ai_response_via_bedrock(
         print(f"Bedrockエラー: {e}")
         raise HTTPException(status_code=500, detail=f"AI応答の生成中にエラーが発生しました: {str(e)}")
 
-
+# ------------------------
 # Bedrockの出力を句点で切る
+# -------------------------
 def stop_generate_sentence(text: str)-> str:
     # （。！？）までを残す
     match = re.search(r'[。！？](?!.*[。！？])', text)

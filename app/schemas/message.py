@@ -41,7 +41,6 @@ class MessageDetail(BaseModel):
     sender_type: Literal["user", "ai"]
 
 
-
 # 管理者投稿一覧表示
 class AdminMessageResponse(BaseModel):
     user_name: str

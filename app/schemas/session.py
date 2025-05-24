@@ -15,8 +15,10 @@ class SessionQueryParams(BaseModel):
     favorite_only: bool = False
     keyword: Optional[str] = None
 
+
 class SessionBase(BaseModel):
     character_mode: CharacterMode
+
 
 class SessionCreate(SessionBase):
     pass
@@ -59,3 +61,6 @@ class SessionWithMessagesResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     messages: List[MessageDetail]
+    
+    class Config:
+        from_attributes = True

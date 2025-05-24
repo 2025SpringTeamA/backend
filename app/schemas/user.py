@@ -33,6 +33,9 @@ class PasswordUpdate(BaseModel):
 # アカウント登録・ログイン　レスポンス
 class TokenResponse(BaseModel):
     token: str
+    
+    class Config:
+        from_attributes = True
 
 
 # アカウント情報取得・レスポンス

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session, joinedload
-from zoneinfo import ZoneInfo
+from sqlalchemy.orm import Session
 
 from datetime import datetime, timedelta
 from models import User, Message
@@ -14,8 +13,9 @@ from utils.timestamp import now_jst
 
 router = APIRouter()
 
-
+# ------------------
 # 管理者アカウント登録
+# ------------------
 @router.post("/admin/register/", response_model=TokenResponse)
 async def register_admin(
     admin_data: UserRegister,
@@ -38,7 +38,9 @@ async def register_admin(
     return {"token": token }
 
 
+# ------------------
 # 管理者ログイン
+# ------------------
 @router.post("/admin/login", response_model=TokenResponse)
 async def login_admin(
     admin_data: UserLogin,
@@ -59,7 +61,9 @@ async def login_admin(
     return {"token": token, "is_admin": admin.is_admin}
 
 
+# -----------------------
 # 管理者アカウント情報取得
+# ------------------
 @router.get("/admin_info", response_model=UserResponse)
 async def get_admin_info(
     current_admin: User = Depends(get_current_admin_user)
@@ -67,7 +71,9 @@ async def get_admin_info(
     return current_admin
 
 
+# ------------------
 # 一般ユーザ情報一覧取得
+# ------------------
 @router.get("/users", response_model=list[UserResponse])
 async def get_all_users(
     db: Session = Depends(get_db),
@@ -90,7 +96,9 @@ async def get_all_users(
     ]
 
 
+# ----------------------------
 # ユーザーアカウントを削除する処理
+# ----------------------------
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: int,
@@ -109,7 +117,9 @@ async def delete_user(
     return {"message": "ユーザーが削除されました"}
 
 
+# ----------------------------
 # ユーザーアカウントを凍結する処理
+# ----------------------------
 @router.patch("/users/{user_id}/deactivate")
 async def deactivate_user(
     user_id: int,
@@ -126,7 +136,9 @@ async def deactivate_user(
     return {"message": "ユーザーが無効化されました"}
 
 
+# ----------------------------
 # ユーザーアカウントを有効化する処理
+# ----------------------------
 @router.patch("/users/{user_id}/activate")
 async def activate_user(
     user_id: int,
@@ -143,7 +155,9 @@ async def activate_user(
     return {"message": "ユーザーが有効化されました"}
 
 
+# ---------------
 # ユーザー情報更新
+# ----------------
 @router.patch("/users/{user_id}")
 async def update_user(
     user_id: int,
@@ -167,7 +181,9 @@ async def update_user(
     return {"message": "ユーザー情報が更新されました"}
 
 
+# --------
 # 投稿一覧
+# --------
 @router.get("/messages", response_model=list[AdminMessageResponse])
 async def get_messages(
     db: Session = Depends(get_db),

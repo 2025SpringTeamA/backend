@@ -7,7 +7,9 @@ from schemas.session import SessionSummaryResponse
 from fastapi import HTTPException
 
 
+# --------------
 # チャット履歴取得
+# --------------
 def get_sessions_with_first_message(
     db: Session, 
     user_id: int,
@@ -57,7 +59,9 @@ def get_sessions_with_first_message(
     return result
 
 
+# ------------------
 # 管理者用投稿内容一覧
+# ------------------
 def get_all_sessions_with_first_message(
     db:Session,
 )-> list[dict]:
@@ -83,8 +87,9 @@ def get_all_sessions_with_first_message(
     return result
 
 
-
+# --------
 # 履歴削除
+# ---------
 def delete_session(
     db: Session,
     session_id: int,
@@ -103,7 +108,9 @@ def delete_session(
     return True
 
 
+# ----------------
 # お気に入りのトグル
+# -----------------
 def toggle_favorite_session(
     db: Session,
     session_id: int,
@@ -132,4 +139,3 @@ def toggle_favorite_session(
         db.add(new_fav)
         db.commit()
         return {"message": "お気に入りを追加しました", "is_favorite": True}
-    

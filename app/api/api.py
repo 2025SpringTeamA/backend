@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from api.endpoints import auth, admin, user, session, message, generated_media
+from api.endpoints import auth, admin, user, session, message
 
 
 router = APIRouter()
@@ -15,5 +15,3 @@ router.include_router(user.router, tags=["User"])
 router.include_router(session.router, tags=["Session"])
 # メッセージ用エンドポイント
 router.include_router(message.router, tags=["Message"])
-# 生成用エンドポイント
-router.include_router(generated_media.router, tags=["Generated_media"])

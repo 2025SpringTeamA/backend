@@ -14,7 +14,9 @@ from services.session import get_sessions_with_first_message, toggle_favorite_se
 
 router = APIRouter()
 
+# -----------------
 # チャットの開始
+# -----------------
 @router.post("/sessions", response_model=SessionResponse)
 async def create_session(
     session_data: SessionCreate,
@@ -50,7 +52,9 @@ async def create_session(
     return new_session
 
 
+# ----------------
 # チャット一覧取得
+# ----------------
 @router.get("/sessions", response_model=list[SessionSummaryResponse])
 async def get_sessions(
     db: Session = Depends(get_db),
@@ -66,7 +70,9 @@ async def get_sessions(
     )
 
 
+# -------------------
 # 特定のチャットを取得
+# -------------------
 @router.get("/sessions/{session_id}", response_model=SessionWithMessagesResponse)
 async def get_session(
     session_id: int,
@@ -96,7 +102,9 @@ async def get_session(
     }
 
 
+# -------------------
 # 特定のチャットを変更
+# -------------------
 @router.patch("/sessions/{session_id}", response_model= SessionResponse)
 async def update_session(
     id: int, 
@@ -122,7 +130,9 @@ async def update_session(
     return session
 
 
+# ------------------
 # 特定のチャットを削除
+# ------------------
 @router.delete("/sessions/{session_id}")
 async def delete_session_route(
     session_id: int,
@@ -135,7 +145,9 @@ async def delete_session_route(
     return {"message": "チャットを削除しました。"}
 
 
+# ----------------
 # お気に入りのトグル
+# ----------------
 @router.post("/sessions/{session_id}/favorite")
 def toggle_favorite(
     session_id: int,
