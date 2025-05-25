@@ -5,14 +5,10 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - '**'
   pull_request:
     branches:
       - main
       - develop
-    paths:
-      - '**'
   workflow_dispatch:
 
 jobs:
@@ -23,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          path: .
+          path: backend
 
       - name: Set up Python
         uses: actions/setup-python@v5
