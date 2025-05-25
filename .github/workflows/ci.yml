@@ -45,18 +45,10 @@ jobs:
       - name: Build API Docker image (local)
         uses: docker/build-push-action@v5
         with:
-          context: ./app/api
+          context: .
           push: false
           load: true
           tags: saburo-api:local-test
-
-      - name: Build Migration Docker image (local)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app/migration
-          push: false
-          load: true
-          tags: saburo-migration:local-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
