@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'workflow_dispatch') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     environment: production
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,7 +68,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          fiel: ./backend/Dockerfile
+          file: ./backend/Dockerfile
           target: api
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/saburo-api:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-api:latest
@@ -86,14 +87,14 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-api.outputs.task-definition }}
-          service: saburo-api-service
-          cluster: saburo-cluster
+          service: prod-ecs-service
+          cluster: prod-ecs-cluster
           wait-for-service-stability: true
 
       - name: Run DB Migration
         run: |
           aws ecs run-task \
-            --cluster saburo-cluster \
-            --task-definition saburo-migration \
+            --cluster prod-ecs-cluster \
+            --task-definition prod-saburo-app-task \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNETS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUPS }}],assignPublicIp=ENABLED}"
