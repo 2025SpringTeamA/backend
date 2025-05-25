@@ -6,14 +6,13 @@ on:
       - main
       - develop
     paths:
-      - 'backend/**'
-      - '.github/workflows/ci.yml'
+      - '**'
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - 'backend/**'
+      - '**'
   workflow_dispatch:
 
 jobs:
@@ -29,7 +28,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'backend/requirements.txt'
+          cache-dependency-path: 'requirements.txt'
 
       - name: Install dependencies
         working-directory: backend
@@ -52,7 +51,7 @@ jobs:
       - name: Build API Docker image (local)
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/api
+          context: ./app/api
           push: false
           load: true
           tags: saburo-api:local-test
