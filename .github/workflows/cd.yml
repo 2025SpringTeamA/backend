@@ -58,7 +58,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/saburo-api:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-api:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -67,8 +67,8 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: backend/task-definitions/api.json
-          container-name: api
-          image: ${{ steps.login-ecr.outputs.registry }}/saburo-api:${{ steps.set-sha.outputs.commit_sha }}
+          container-name: fastapi-app
+          image: ${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:${{ steps.set-sha.outputs.commit_sha }}
 
       - name: Deploy ECS API task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -119,7 +119,7 @@ jobs:
             --task-definition prod-saburo-app-task \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNETS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUPS }}],assignPublicIp=ENABLED}"
-                    --overrides '{"containerOverrides":[{"name":"api","command":["python","-m","alembic","upgrade","head"]}]}' \
+                    --overrides '{"containerOverrides":[{"name":"db-migration","command":["python","-m","alembic","upgrade","head"]}]}' \
             --query 'tasks[0].taskArn' \
             --output text)
           
