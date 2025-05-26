@@ -35,8 +35,6 @@ jobs:
         with:
           name: backend-commit-info
           path: /tmp/artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Set commit SHA
         id: set-sha
@@ -90,6 +88,27 @@ jobs:
           service: prod-ecs-service
           cluster: prod-ecs-cluster
           wait-for-service-stability: true
+      
+      - name: Checkout infra-Terraform repository
+        uses: actions/checkout@v4
+        with:
+          repository: 2025SpringTeamA/infra-Terraform
+          path: infra
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get RDS endpoint from Terraform output
+        id: get-rds
+        run: |
+          cd infra
+          terraform init -backend=false
+          echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint)" >> $GITHUB_ENV
+
+      - name: Update Secrets Manager with new DATABASE_URL
+        run: |
+          DB_URL="mysql+pymysql://fastapi_user:fastapi_pass@${RDS_ENDPOINT}/fastapi_db"
+          aws secretsmanager update-secret \
+            --secret-id prod/saburo-fastapi/db-credentials \
+            --secret-string "{\"MYSQL_DATABASE\":\"fastapi_db\",\"MYSQL_USER\":\"fastapi_user\",\"MYSQL_PASSWORD\":\"fastapi_pass\",\"MYSQL_ROOT_PASSWORD\":\"rootpassword\",\"DATABASE_URL\":\"$DB_URL\"}"  
 
       - name: Run DB Migration
         run: |
