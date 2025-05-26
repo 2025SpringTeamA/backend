@@ -62,18 +62,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Update ECS API task definition
-        id: task-def-api
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: backend/task-definitions/api.json
-          container-name: fastapi-app
-          image: ${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:${{ steps.set-sha.outputs.commit_sha }}
-
       - name: Deploy ECS API task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-api.outputs.task-definition }}
+          task-definition: prod-saburo-app-task
           service: prod-ecs-service
           cluster: prod-ecs-cluster
           wait-for-service-stability: true
