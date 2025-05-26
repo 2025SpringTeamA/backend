@@ -13,7 +13,7 @@ RUN apt-get update && \
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app/ .
+COPY app ./app
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
