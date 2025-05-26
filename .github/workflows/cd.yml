@@ -62,14 +62,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy ECS API task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: prod-saburo-app-task
-          service: prod-ecs-service
-          cluster: prod-ecs-cluster
-          wait-for-service-stability: true
-      
+      - name: Force ECS Service New Deployment
+        run: |
+          aws ecs update-service \
+          --cluster prod-ecs-cluster \
+          --service prod-ecs-service \
+          --force-new-deployment
+
       - name: Checkout infra-Terraform repository
         uses: actions/checkout@v4
         with:
@@ -82,7 +81,7 @@ jobs:
         run: |
           cd infra
           terraform init -backend=false
-          if ! RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2 >/dev/null); then
+          if ! RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null); then
             echo "Failed to get RDS endpoint from Terraform output"
             exit 1
           fi
