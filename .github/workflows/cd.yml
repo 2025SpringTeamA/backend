@@ -30,11 +30,10 @@ jobs:
       - name: Set commit SHA
         id: set-sha
         run: |
-          if [ -n "${{ github.event.inputs.commit_sha }}" ]; then
-            echo "commit_sha=${{ github.event.inputs.commit_sha }}" >> "$GITHUB_OUTPUT"
-          elif [ -f "/tmp/artifacts/commit-sha" ]; then
-            SHA=$(cat /tmp/artifacts/commit-sha)
-            echo "commit_sha=$SHA" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.commit_sha }}" ]; then
+            echo "commit_sha=${{ inputs.commit_sha }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" == "workflow_run" ]; then
+            echo "commit_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
           else
             echo "commit_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           fi
@@ -92,19 +91,59 @@ jobs:
         run: |
           cd infra
           terraform init -backend=false
-          echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint)" >> $GITHUB_ENV
+          if ! RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2 >/dev/null); then
+            echo "Failed to get RDS endpoint from Terraform output"
+            exit 1
+          fi
+          if [ -z "$RDS_ENDPOINT" ]; then
+            echo "RDS endpoint is empty"
+            exit 1
+          fi          
+          echo "rds=$RDS_ENDPOINT" >> $GITHUB_OUTPUT
+
 
       - name: Update Secrets Manager with new DATABASE_URL
         run: |
-          DB_URL="mysql+pymysql://fastapi_user:fastapi_pass@${RDS_ENDPOINT}/fastapi_db"
-          aws secretsmanager update-secret \
+          DB_URL="mysql+pymysql://fastapi_user:fastapi_pass@${{ steps.get-rds.outputs.rds }}/fastapi_db"
+          if ! aws secretsmanager update-secret \
             --secret-id prod/saburo-fastapi/db-credentials \
-            --secret-string "{\"MYSQL_DATABASE\":\"fastapi_db\",\"MYSQL_USER\":\"fastapi_user\",\"MYSQL_PASSWORD\":\"fastapi_pass\",\"MYSQL_ROOT_PASSWORD\":\"rootpassword\",\"DATABASE_URL\":\"$DB_URL\"}"  
+            --secret-string "{\"MYSQL_DATABASE\":\"fastapi_db\",\"MYSQL_USER\":\"fastapi_user\",\"MYSQL_PASSWORD\":\"fastapi_pass\",\"MYSQL_ROOT_PASSWORD\":\"rootpassword\",\"DATABASE_URL\":\"$DB_URL\"}"
+          then           
+            echo "Failed to update Secrets Manager"
+            exit 1
+          fi
 
       - name: Run DB Migration
         run: |
-          aws ecs run-task \
+          TASK_ARN=$(aws ecs run-task \
             --cluster prod-ecs-cluster \
             --task-definition prod-saburo-app-task \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNETS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUPS }}],assignPublicIp=ENABLED}"
+                    --overrides '{"containerOverrides":[{"name":"api","command":["python","-m","alembic","upgrade","head"]}]}' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "Failed to start migration task"
+            exit 1
+          fi
+          
+          echo "Migration task started: $TASK_ARN"
+          
+          # タスクの完了を待機
+          aws ecs wait tasks-stopped --cluster prod-ecs-cluster --tasks $TASK_ARN
+          
+          # タスクの終了コードを確認
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster prod-ecs-cluster \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration task failed with exit code: $EXIT_CODE"
+            exit 1
+          fi
+          
+          echo "Migration completed successfully"    
