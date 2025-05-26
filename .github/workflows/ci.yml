@@ -51,17 +51,3 @@ jobs:
           tags: saburo-api:local-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          
-      - name: Save commit info
-        if: github.event_name != 'pull_request'
-        run: |
-          mkdir -p /tmp/artifacts
-          echo "${{ github.sha }}" > /tmp/artifacts/commit-sha
-
-      - name: Upload commit SHA
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-commit-info
-          path: /tmp/artifacts/commit-sha
-          retention-days: 7

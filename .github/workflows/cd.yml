@@ -27,15 +27,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Download commit info
-        if: github.event.inputs.commit_sha == '' && github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        id: download-artifact
-        with:
-          name: backend-commit-info
-          path: /tmp/artifacts
-
       - name: Set commit SHA
         id: set-sha
         run: |
