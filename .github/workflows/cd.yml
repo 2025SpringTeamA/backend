@@ -56,18 +56,11 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.prod
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Force ECS Service New Deployment
-        run: |
-          aws ecs update-service \
-          --cluster prod-ecs-cluster \
-          --service prod-ecs-service \
-          --force-new-deployment
 
       - name: Checkout infra-Terraform repository
         uses: actions/checkout@v4
@@ -75,6 +68,11 @@ jobs:
           repository: 2025SpringTeamA/infra-Terraform
           path: infra
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Terraform CLI
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
 
       - name: Get RDS endpoint from Terraform output
         id: get-rds
@@ -103,37 +101,9 @@ jobs:
             exit 1
           fi
 
-      - name: Run DB Migration
+      - name: Force ECS Service New Deployment
         run: |
-          TASK_ARN=$(aws ecs run-task \
+          aws ecs update-service \
             --cluster prod-ecs-cluster \
-            --task-definition prod-saburo-app-task \
-            --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNETS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUPS }}],assignPublicIp=ENABLED}"
-                    --overrides '{"containerOverrides":[{"name":"db-migration","command":["python","-m","alembic","upgrade","head"]}]}' \
-            --query 'tasks[0].taskArn' \
-            --output text)
-          
-          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
-            echo "Failed to start migration task"
-            exit 1
-          fi
-          
-          echo "Migration task started: $TASK_ARN"
-          
-          # タスクの完了を待機
-          aws ecs wait tasks-stopped --cluster prod-ecs-cluster --tasks $TASK_ARN
-          
-          # タスクの終了コードを確認
-          EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster prod-ecs-cluster \
-            --tasks $TASK_ARN \
-            --query 'tasks[0].containers[0].exitCode' \
-            --output text)
-          
-          if [ "$EXIT_CODE" != "0" ]; then
-            echo "Migration task failed with exit code: $EXIT_CODE"
-            exit 1
-          fi
-          
-          echo "Migration completed successfully"    
+            --service prod-ecs-service \
+            --force-new-deployment
