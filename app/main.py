@@ -27,9 +27,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello from FastAPI + MySQL in Docker!"}
-
-    
 app.include_router(api_router, prefix="/api")
