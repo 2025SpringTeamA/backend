@@ -29,7 +29,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Saburo FastAPI application is running", "status": "ok"}
+    return {"status": "ok"}
 
 @app.get("/health")
 async def health_check():
