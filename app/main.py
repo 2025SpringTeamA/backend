@@ -27,4 +27,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"message": "Saburo FastAPI application is running", "status": "ok"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "saburo-fastapi"}
+
 app.include_router(api_router, prefix="/api")
