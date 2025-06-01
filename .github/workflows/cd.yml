@@ -1,4 +1,4 @@
-name: Deploy FastAPI to ECR and ECS
+name: Deploy FastAPI to ECR
 
 on:
   workflow_run:
@@ -8,15 +8,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      commit_sha:
-        description: 'Commit SHA to deploy'
-        required: false
-        type: string
 
 jobs:
-  deploy-to-ecr-ecs:
-    name: Deploy to ECR and ECS
+  deploy-to-ecr:
+    name: Deploy to ECR
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'workflow_dispatch') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     environment: production
@@ -24,86 +19,30 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Set commit SHA
-        id: set-sha
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.commit_sha }}" ]; then
-            echo "commit_sha=${{ inputs.commit_sha }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" == "workflow_run" ]; then
-            echo "commit_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "commit_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push API image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.prod
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:${{ steps.set-sha.outputs.commit_sha }},${{ steps.login-ecr.outputs.registry }}/saburo-fastapi:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Checkout infra-Terraform repository
-        uses: actions/checkout@v4
-        with:
-          repository: 2025SpringTeamA/infra-Terraform
-          path: infra
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Terraform CLI
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.6
-
-      - name: Get RDS endpoint from Terraform output
-        id: get-rds
+      - name: Log in to Amazon ECR
         run: |
-          cd infra
-          terraform init -backend=false
-          if ! RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null); then
-            echo "Failed to get RDS endpoint from Terraform output"
-            exit 1
-          fi
-          if [ -z "$RDS_ENDPOINT" ]; then
-            echo "RDS endpoint is empty"
-            exit 1
-          fi          
-          echo "rds=$RDS_ENDPOINT" >> $GITHUB_OUTPUT
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+            | docker login --username AWS --password-stdin \
+              $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-
-      - name: Update Secrets Manager with new DATABASE_URL
+      - name: Build Docker image
         run: |
-          DB_URL="mysql+pymysql://fastapi_user:fastapi_pass@${{ steps.get-rds.outputs.rds }}/fastapi_db"
-          if ! aws secretsmanager update-secret \
-            --secret-id prod/saburo-fastapi/db-credentials \
-            --secret-string "{\"MYSQL_DATABASE\":\"fastapi_db\",\"MYSQL_USER\":\"fastapi_user\",\"MYSQL_PASSWORD\":\"fastapi_pass\",\"MYSQL_ROOT_PASSWORD\":\"rootpassword\",\"DATABASE_URL\":\"$DB_URL\"}"
-          then           
-            echo "Failed to update Secrets Manager"
-            exit 1
-          fi
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }} -f Dockerfile.prod .
 
-      - name: Force ECS Service New Deployment
+      - name: Tag Docker image
         run: |
-          aws ecs update-service \
-            --cluster prod-ecs-cluster \
-            --service prod-ecs-service \
-            --force-new-deployment
+          docker tag ${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }} \
+          $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
+
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push \
+          $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
