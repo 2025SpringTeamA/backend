@@ -12,11 +12,9 @@ class Message(Base, TimestampMixin):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("sessions.id"))
-    is_users = Column(Boolean, default=True)
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"))
+    is_user = Column(Boolean, default=True)
     response_type = Column(Enum(ResponseTypeEnum))
     content = Column(Text, nullable=False)
 
     session = relationship("Session", back_populates="messages")
-    favorites = relationship("Favorite", back_populates="message")
-    generated_media = relationship("GeneratedMedia", back_populates="message")

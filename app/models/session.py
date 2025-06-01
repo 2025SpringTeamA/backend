@@ -9,12 +9,13 @@ class CharacterModeEnum(str, enum.Enum):
     bijyo = "bijyo"
     anger_mom = "anger_mom"
 
-class Session(Base):
+class Session(Base, TimestampMixin):
     __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     character_mode = Column(Enum(CharacterModeEnum), nullable=False)
 
     user = relationship("User", back_populates="sessions")
-    messages = relationship("Message", back_populates="session")
+    messages = relationship("Message", back_populates="session", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="session", cascade="all, delete-orphan")

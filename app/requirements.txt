@@ -2,5 +2,14 @@ fastapi
 uvicorn[standard]
 mysql-connector-python
 pymysql
+email-validator
+pydantic-settings
 cryptography
+python-jose
+passlib[bcrypt]
+bcrypt==3.2.0
 alembic
+openai>=1.3.8,<2.0.0
+boto3
+slowapi
+tenacity
